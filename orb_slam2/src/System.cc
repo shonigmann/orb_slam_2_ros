@@ -601,6 +601,98 @@ bool System::SaveMap(const string &filename) {
     return true;
 }
 
+// map serialization addition
+bool System::SaveMapAsPLY(const string &filename) {
+    unique_lock<mutex>MapPointGlobal(MapPoint::mGlobalMutex);
+
+    // Write PLY
+    FILE* fout = NULL;
+    fout = fopen(filename.c_str(), "wb");  // write in binary mode
+    if (fout == NULL)
+    {
+        cout << "Unable to create file " << filename << endl;
+        return false;
+    }
+
+    const rlim_t kNewStackSize = 64L * 1024L * 1024L;   // min stack size = 64 Mb
+    const rlim_t kDefaultCallStackSize = GetCurrentCallStackSize();
+    if (!SetCallStackSize(kNewStackSize)) {
+        std::cerr << "Error changing the call stack size; Aborting" << std::endl;
+        return false;
+    }
+
+    try {
+        std::cout << "saving map file: " << map_file << std::flush;
+        ROS_WARN( "Starting to save the PLY file" );
+        // Write headers
+        fprintf(fout, "ply\n");
+        fprintf(fout, "format binary_little_endian 1.0\n");
+
+        //find number of points
+        int vnum = mpMap->MapPointsInMap();
+
+        ROS_WARN("File has %d points./n", vnum);
+
+        fprintf(fout, "element vertex %d\n", vnum);
+        fprintf(fout, "property float x\n");
+        fprintf(fout, "property float y\n");
+        fprintf(fout, "property float z\n");
+        fprintf(fout, "end_header\n");
+
+        float pt3[3];
+
+        //TODO: figure out where to get vertices_.pt
+        vector<MapPoint*> allMapPoints = mpMap->GetAllMapPoints();
+        Eigen::Matrix<double, 3, 1> v;
+
+        for (auto p : allMapPoints) {
+            Eigen::Matrix<double, 3, 1> v = ORB_SLAM2::Converter::toVector3d(p->GetWorldPos());
+            std::ostringstream oss;
+            oss << "Point " << ": " << v.x() << "," << v.y() << "," << v.z() << ";";
+            std::string var = oss.str();
+            ROS_WARN("%s", var.c_str());
+            pt3[0] = float(v.x());
+            pt3[1] = float(v.y());
+            pt3[2] = float(v.z());
+            ROS_WARN("%f %f %f", pt3[0], pt3[1], pt3[2]);
+            fwrite(pt3, sizeof(float), 3, fout);
+            ROS_WARN("WROTE LINE");
+        }
+        /*
+        for (int i = 0; i != vnum; ++i)
+        {
+            v = ORB_SLAM2::Converter::toVector3d(MapPoints[i]->GetWorldPos());
+
+            std::ostringstream oss;
+            oss << "Point " << i << ": " << v.x() << "," << v.y() << "," << v.z() << ";";
+            std::string var = oss.str();
+            ROS_WARN("%s", var.c_str());
+            pt3[0] = float(v.x());
+            pt3[1] = float(v.y());
+            pt3[2] = float(v.z());
+            ROS_WARN("%f %f %f", pt3[0], pt3[1], pt3[2]);
+            fwrite(pt3, sizeof(float), 3, fout);
+            ROS_WARN("WROTE LINE %d", i)
+        }
+        */
+        std::cout << " ... done" << std::endl;
+        fclose(fout);
+
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+        SetCallStackSize(kDefaultCallStackSize);
+        return false;
+    } catch (...) {
+        std::cerr << "Unknows exeption" << std::endl;
+        SetCallStackSize(kDefaultCallStackSize);
+        return false;
+    }
+
+    SetCallStackSize(kDefaultCallStackSize);
+    return true;
+}
+
+
 bool System::LoadMap(const string &filename) {
     
     unique_lock<mutex>MapPointGlobal(MapPoint::mGlobalMutex);

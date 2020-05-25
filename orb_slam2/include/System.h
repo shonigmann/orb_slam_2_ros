@@ -120,6 +120,9 @@ public:
 
     bool SaveMap(const string &filename);
 
+    bool SaveMapAsPLY(const string &filename);
+
+
     cv::Mat GetCurrentPosition ();
 
     // Information from most recent processed frame

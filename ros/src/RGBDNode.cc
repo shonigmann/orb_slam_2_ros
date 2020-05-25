@@ -44,6 +44,7 @@ RGBDNode::~RGBDNode () {
 
 
 void RGBDNode::ImageCallback (const sensor_msgs::ImageConstPtr& msgRGB, const sensor_msgs::ImageConstPtr& msgD) {
+  ROS_WARN("TEST WARNING: IMAGE CALLBACK");
   // Copy the ros image message to cv::Mat.
   cv_bridge::CvImageConstPtr cv_ptrRGB;
   try {

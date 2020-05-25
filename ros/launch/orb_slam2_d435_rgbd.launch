@@ -1,9 +1,10 @@
+<?xml version="1.0" ?>
 <launch>
   <node name="orb_slam2_rgbd" pkg="orb_slam2_ros"
       type="orb_slam2_ros_rgbd" output="screen">
-
+	<!--
        <remap from="/camera/rgb/image_raw" to="/camera/color/image_rect_color" />
-       <remap from="/camera/depth_registered/image_raw" to="/camera/depth/image_rect_raw" />
+       <remap from="/camera/depth_registered/image_raw" to="/camera/depth/image_rect_raw" /> -->
 
        <param name="publish_pointcloud" type="bool" value="true" />
        <param name="publish_pose" type="bool" value="true" />
@@ -17,7 +18,9 @@
 
        <param name="pointcloud_frame_id" type="string" value="map" />
        <param name="camera_frame_id" type="string" value="camera_link" />
-       <param name="min_num_kf_in_map" type="int" value="5" />
+
+<!-- TWEAKING IN THE HOPES OF FIXING. originally 5 -->
+       <param name="min_num_kf_in_map" type="int" value="2" />
 
        <!-- ORB parameters -->
        <param name="/ORBextractor/nFeatures" type="int" value="1000" />
@@ -25,10 +28,16 @@
        <param name="/ORBextractor/nLevels" type="int" value="8" />
        <param name="/ORBextractor/iniThFAST" type="int" value="20" />
        <param name="/ORBextractor/minThFAST" type="int" value="7" />
-
+<!-- TWEAKING IN THE HOPES OF GETTING IT TO WORK. Tweaked below: 
+       <param name="/ORBextractor/nFeatures" type="int" value="100" />
+       <param name="/ORBextractor/scaleFactor" type="double" value="1.2" />
+       <param name="/ORBextractor/nLevels" type="int" value="8" />
+       <param name="/ORBextractor/iniThFAST" type="int" value="5" />
+       <param name="/ORBextractor/minThFAST" type="int" value="3" />
+-->
        <!-- Camera parameters -->
        <!-- Camera frames per second -->
-       <param name="camera_fps" type="int" value="30" />
+       <param name="camera_fps" type="int" value="30" />  <!-- changed from default of 30 -->
        <!-- Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale) -->
        <param name="camera_rgb_encoding" type="bool" value="true" />
        <!-- Close/Far threshold. Baseline times. -->
@@ -39,17 +48,31 @@
         <!-- Camera calibration parameters -->
         <!--If the node should wait for a camera_info topic to take the camera calibration data-->
        <param name="load_calibration_from_cam" type="bool" value="false" />
+
        <!-- Camera calibration and distortion parameters (OpenCV) -->
-      <param name="camera_fx" type="double" value="615.6707153320312" />
-      <param name="camera_fy" type="double" value="615.962158203125" />
-      <param name="camera_cx" type="double" value="328.0010681152344" />
-      <param name="camera_cy" type="double" value="241.31031799316406" />
-       <!-- Camera calibration and distortion parameters (OpenCV) -->
-      <param name="camera_k1" type="double" value="0.0" />
+<!-- foxal length, in pixels where fx = F/px, F = focal length in world units (e.g. mm), px = pixel size in world units (e.g. mm) -->
+<!-- for an ideal Gazebo camera, focal_length_in_pixels = image_width_in_pixels*0.5/[tan(FOV_in_deg*0.5*Pi/180)] -->
+<!-- Currently using resolution of 1280 x 720, with an h_fov of 1.211. This works out to: -->
+<!-- Original settings:
+      <param name="camera_fx" type="double" value="615.6707153320312" />  
+      <param name="camera_fy" type="double" value="615.962158203125" />  -->
+      <param name="camera_fx" type="double" value="924.531664151" />  
+      <param name="camera_fy" type="double" value="1015.785911" />
+
+<!-- c_x and c_y are the optical center, in pixels, denoting the offset of the center of the optical image from the 0 position. In an ideal world, this corresponds with the center of the image sensor. In reality, as camera's aren't perfect pinholes and as the manufacturing isn't perfect, there is some variation. Not sure if this needs to be 0 or 1/2 resolution-->
+<!--      <param name="camera_cx" type="double" value="328.0010681152344" />
+      <param name="camera_cy" type="double" value="241.31031799316406" /> -->
+      <param name="camera_cx" type="double" value="640" />
+      <param name="camera_cy" type="double" value="360" />
+
+       <!-- Camera calibration and distortion parameters (OpenCV). Should be 0 for Gazebo Simulated Camera -->
+<!-- k1, k2, and k3 are radial distorion coefficients. k1 relates to r^2, k2 to r^4, and k3 to r^6 -->
+      <param name="camera_k1" type="double" value="0.0" /> 
       <param name="camera_k2" type="double" value="0.0" />
+      <param name="camera_k3" type="double" value="0.0" />
+<!-- p1 and p2 are tangential distortion parameters (lens and image plane aren't parallel). x_distorted = x+(2*p1*x*y + p2*(r^2+2*x^2)); y_distored = y + (p1*(r^2+2*y^2)+2*p2*x*y) -->
       <param name="camera_p1" type="double" value="0.0" />
       <param name="camera_p2" type="double" value="0.0" />
-      <param name="camera_k3" type="double" value="0.0" />
       <!-- IR projector baseline times fx (aprox.) -->
       <param name="camera_baseline" type="double" value="9.052" />
 

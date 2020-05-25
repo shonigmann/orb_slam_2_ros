@@ -205,7 +205,7 @@ void Node::ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &confi
 
 
 bool Node::SaveMapSrv (orb_slam2_ros::SaveMap::Request &req, orb_slam2_ros::SaveMap::Response &res) {
-  res.success = orb_slam_->SaveMap(req.name);
+  res.success = orb_slam_->SaveMapAsPLY(req.name);
 
   if (res.success) {
     ROS_INFO_STREAM ("Map was saved as " << req.name);
